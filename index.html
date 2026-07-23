@@ -300,7 +300,7 @@
 
             <div class="payment-amount-box">
                 <div class="payment-label">应付金额</div>
-                <div class="payment-amount">¥38 <small>CNY</small></div>
+                <div class="payment-amount">¥48 <small>CNY</small></div>
             </div>
 
             <!-- 付款码展示区 (1.png) -->
@@ -366,7 +366,7 @@
                     qrElement.classList.add('fallback-text');
                 };
                 // 设置 src 为 1.png (同目录)
-                img.src = '1.png';
+                img.src = '1.jpg';
                 // 如果浏览器已经缓存，onload会立刻触发，但为了安全加上超时重试
                 // 若图片加载超时 (例如网络慢)，也视为失败? 这里仅使用onerror
                 // 但为了兼容，设一个短超时
