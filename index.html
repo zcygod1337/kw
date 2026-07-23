@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>简约购物 · 付款码</title>
+    <style>
+        /* 全局重置 & 字体 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        /* 卡片容器 —— 同时也是路由视图 */
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            background: #ffffff;
+            border-radius: 36px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            transition: all 0.25s ease;
+            padding: 24px 20px 28px;
+        }
+
+        /* 页面切换 (简单显示隐藏) */
+        .page {
+            display: none;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        /* ---------- 商品页 ---------- */
+        .product-image {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #eef2f6;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2c3e50;
+            font-size: 1rem;
+            font-weight: 450;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="%238a9aa8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 60px 60px;
+            position: relative;
+            margin-bottom: 4px;
+        }
+
+        /* 商品信息 */
+        .product-title {
+            font-size: 1.7rem;
+            font-weight: 620;
+            letter-spacing: -0.02em;
+            color: #0b1a2b;
+            line-height: 1.2;
+            margin-top: 4px;
+        }
+
+        .product-desc {
+            font-size: 0.95rem;
+            color: #5b6f82;
+            line-height: 1.5;
+            margin-top: -4px;
+        }
+
+        .product-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e2f3f;
+            padding: 8px 0 2px;
+        }
+
+        .product-price small {
+            font-size: 1rem;
+            font-weight: 450;
+            color: #6b7f92;
+            margin-left: 4px;
+        }
+
+        .buy-btn {
+            background: #1e2f3f;
+            border: none;
+            border-radius: 60px;
+            padding: 18px 0;
+            font-size: 1.2rem;
+            font-weight: 550;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 12px;
+            width: 100%;
+            text-align: center;
+            letter-spacing: 0.3px;
+            box-shadow: 0 6px 14px rgba(28, 45, 65, 0.12);
+        }
+
+        .buy-btn:active {
+            background: #0f1e2b;
+            transform: scale(0.97);
+        }
+
+        .buy-btn:focus-visible {
+            outline: 2px solid #1e2f3f;
+            outline-offset: 2px;
+        }
+
+        /* ---------- 付款页 ---------- */
+        .back-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .back-btn {
+            background: #f0f3f7;
+            border: none;
+            border-radius: 40px;
+            padding: 10px 18px 10px 14px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #1e2f3f;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .back-btn:active {
+            background: #e2e8ef;
+        }
+
+        .back-btn svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            fill: none;
+        }
+
+        .payment-amount-box {
+            background: #f8faff;
+            border-radius: 28px;
+            padding: 22px 18px;
+            text-align: center;
+            border: 1px solid #eef3f9;
+            margin: 6px 0 10px;
+        }
+
+        .payment-label {
+            font-size: 0.95rem;
+            color: #5f7488;
+            letter-spacing: 0.3px;
+        }
+
+        .payment-amount {
+            font-size: 2.8rem;
+            font-weight: 680;
+            color: #0b1a2b;
+            line-height: 1.2;
+        }
+
+        .payment-amount small {
+            font-size: 1.3rem;
+            font-weight: 450;
+            color: #5f7488;
+            margin-left: 2px;
+        }
+
+        /* 付款码区域 */
+        .qr-wrapper {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 24px 12px 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #eaf0f6;
+            margin: 8px 0 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .qr-code {
+            width: 100%;
+            max-width: 220px;
+            aspect-ratio: 1 / 1;
+            background: #f4f8fe;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: url('1.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: #ffffff;
+            border: 1px solid #e3eaf2;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.03);
+            transition: background 0.1s;
+        }
+
+        /* 如果图片加载失败，显示备用文字 (但依然保留背景图) */
+        .qr-code::after {
+            content: "付款码 1.png";
+            font-size: 0.9rem;
+            color: #6b7f92;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 8px 18px;
+            border-radius: 60px;
+            backdrop-filter: blur(2px);
+            opacity: 0.7;
+            display: none; /* 默认隐藏，仅当图片无法显示时，通过伪类显示？ 用js兜底 */
+        }
+
+        /* 图片加载失败时显示文字 (但背景图依然存在，这里利用js加class) */
+        .qr-code.fallback-text::after {
+            display: block;
+        }
+        .qr-code.fallback-text {
+            background-image: none !important;
+            background-color: #f0f5fd;
+        }
+
+        .qr-hint {
+            margin-top: 16px;
+            font-size: 0.9rem;
+            color: #4c6379;
+            letter-spacing: 0.2px;
+            background: #f2f7fd;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 450;
+        }
+
+        .payment-footer {
+            font-size: 0.8rem;
+            color: #8a9eaf;
+            text-align: center;
+            padding-top: 8px;
+            border-top: 1px solid #edf2f8;
+            margin-top: 6px;
+        }
+
+        /* 辅助类 */
+        .mt-1 { margin-top: 4px; }
+        .mb-1 { margin-bottom: 4px; }
+        .text-center { text-align: center; }
+
+        /* 小屏优化 */
+        @media (max-width: 440px) {
+            .app-container { padding: 20px 16px 24px; }
+            .product-title { font-size: 1.5rem; }
+            .payment-amount { font-size: 2.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container" role="main">
+        <!-- 商品页 -->
+        <div id="productPage" class="page active">
+            <div class="product-image" aria-label="商品展示图"></div>
+            <div class="product-title">一分机场-vpn链接</div>
+            <div class="product-desc">一个月续费，不可能断连的vpn</div>
+            <div class="product-price">¥48 <small>一个月</small></div>
+            <button class="buy-btn" id="goToPaymentBtn">立即购买 · ¥48</button>
+            <!-- 装饰说明 -->
+            <div style="font-size:0.75rem; color:#98aebb; text-align:center; margin-top:8px;">点击购买跳转付款页面</div>
+        </div>
+
+        <!-- 付款页 -->
+        <div id="paymentPage" class="page">
+            <div class="back-row">
+                <button class="back-btn" id="backToProductBtn">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    返回
+                </button>
+                <span style="font-weight:500; color:#2e4055; margin-left:auto; font-size:0.95rem;">付款确认</span>
+            </div>
+
+            <div class="payment-amount-box">
+                <div class="payment-label">应付金额</div>
+                <div class="payment-amount">¥38 <small>CNY</small></div>
+            </div>
+
+            <!-- 付款码展示区 (1.png) -->
+            <div class="qr-wrapper">
+                <div class="qr-code" id="qrCodeContainer" role="img" aria-label="付款二维码 1.png"></div>
+                <div class="qr-hint">请使用支付软件扫描付款码</div>
+            </div>
+
+            <div class="payment-footer">
+                 金额 ¥48.00
+            </div>
+            <!-- 简易占位说明，可忽略 -->
+            <div style="font-size:0.7rem; color:#b3c4d2; text-align:center; margin-top:6px;">点击返回可继续购物</div>
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            // 页面元素
+            const productPage = document.getElementById('productPage');
+            const paymentPage = document.getElementById('paymentPage');
+            const goBtn = document.getElementById('goToPaymentBtn');
+            const backBtn = document.getElementById('backToProductBtn');
+            const qrElement = document.getElementById('qrCodeContainer');
+
+            // 切换页面函数
+            function showPage(pageId) {
+                if (pageId === 'product') {
+                    productPage.classList.add('active');
+                    paymentPage.classList.remove('active');
+                } else if (pageId === 'payment') {
+                    paymentPage.classList.add('active');
+                    productPage.classList.remove('active');
+                }
+            }
+
+            // 跳转付款页
+            goBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('payment');
+                // 每次进入付款页时，确保付款码背景图重新加载（但不会重复触发，仅用于兜底）
+                // 由于背景图是css background-image, 已经设置。 但为了防止缓存或显示问题，可以强制重绘
+                // 同时检测图片是否存在，若不存在则显示后备文字 (采用动态检测)
+                checkAndFallbackForQR();
+            });
+
+            // 返回商品页
+            backBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('product');
+            });
+
+            // 检测图片 1.png 是否可加载，若不能则显示占位文字 (后备)
+            function checkAndFallbackForQR() {
+                // 用 Image 对象探测图片
+                const img = new Image();
+                img.onload = function() {
+                    // 图片加载成功, 移除 fallback 类
+                    qrElement.classList.remove('fallback-text');
+                };
+                img.onerror = function() {
+                    // 图片加载失败，添加 fallback 类（显示伪类文字）
+                    qrElement.classList.add('fallback-text');
+                };
+                // 设置 src 为 1.png (同目录)
+                img.src = '1.png';
+                // 如果浏览器已经缓存，onload会立刻触发，但为了安全加上超时重试
+                // 若图片加载超时 (例如网络慢)，也视为失败? 这里仅使用onerror
+                // 但为了兼容，设一个短超时
+                const timeoutId = setTimeout(() => {
+                    // 如果既没有onload也没有onerror, 可能因为请求被阻止? 默认加fallback
+                    if (!img.complete) {
+                        // 如果图片未加载完成，但是超过时间，我们添加fallback（保守）
+                        qrElement.classList.add('fallback-text');
+                    }
+                }, 1500);
+                // 但如果 onload 或 onerror 触发，清除超时
+                img.onload = function() {
+                    clearTimeout(timeoutId);
+                    qrElement.classList.remove('fallback-text');
+                };
+                img.onerror = function() {
+                    clearTimeout(timeoutId);
+                    qrElement.classList.add('fallback-text');
+                };
+                // 注意：如果图片已经complete，不会触发onload/onerror， 但会立即触发
+                if (img.complete) {
+                    clearTimeout(timeoutId);
+                    if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+                        qrElement.classList.add('fallback-text');
+                    } else {
+                        qrElement.classList.remove('fallback-text');
+                    }
+                }
+            }
+
+            // 初始检测一次 (页面加载时如果默认显示商品页，但付款码在付款页，先不检测，等进入付款页再检测)
+            // 但为了首次进入付款页时检测，由 goBtn 触发 checkAndFallbackForQR
+            // 如果用户直接刷新在付款页？ 默认商品页是active，所以不会。 
+            // 但如果有人直接修改html使付款页激活，则可以在页面加载时检测
+            // 增强: 如果初始加载付款页? 但默认是商品页。 再加上：若付款页意外可见，检测
+            if (paymentPage.classList.contains('active')) {
+                checkAndFallbackForQR();
+            }
+
+            // 额外: 点击付款页的返回，清除可能的状态，但无需额外操作
+            // 也提供全局键盘返回（但无需）
+            console.log('简洁购物页已启动 · 付款码 1.png');
+        })();
+    </script>
+</body>
+</html>
